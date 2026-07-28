@@ -156,21 +156,36 @@ const Platform = {
         }
       } else if (Platform.OS === 'macos') {
         try {
-          const response = await window.electronAPI.authorizeGoogleCalendar(clientId, scope);
-          if (response && response.access_token) {
-            await Platform.Storage.setSecure('meyeGCalToken', response.access_token);
-            if (typeof SettingsView !== 'undefined') {
-              SettingsView.prefs.calSync = 'google';
-              SettingsView.save();
-              SettingsView.applyAll();
-            }
-            if (typeof SyncManager !== 'undefined') {
-              SyncManager.fetchGoogleEvents();
-            }
-            alert("Google Calendar Connected via macOS Native!");
-          }
+          // Open in system browser, passing state=electron
+          const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent('https://meyee.vercel.app/')}&response_type=token&scope=${encodeURIComponent(scope)}&state=electron`;
+          window.electronAPI.openExternal(authUrl);
         } catch (e) {
           console.error("macOS OAuth error", e);
+        }
+      }
+    },
+
+    async authorizeGitHub() {
+      const authUrl = 'https://meyee.vercel.app/api/github-auth';
+      if (Platform.OS === 'web') {
+        try {
+          const a = document.createElement('a');
+          a.href = authUrl;
+          a.target = '_self';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+        } catch (e) {
+          window.location.href = authUrl;
+        }
+      } else if (Platform.OS === 'android') {
+        // Fallback for Android - use standard browser
+        window.location.href = authUrl;
+      } else if (Platform.OS === 'macos') {
+        try {
+          window.electronAPI.openExternal(authUrl + '?state=electron');
+        } catch (e) {
+          console.error("macOS GitHub Auth error", e);
         }
       }
     }

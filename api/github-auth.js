@@ -22,13 +22,18 @@ export default async function handler(req, res) {
 
   // If GET, redirect to GitHub authorization page or handle callback
   if (req.method === 'GET') {
+    const state = req.query.state || '';
     if (req.query && req.query.code) {
-      res.redirect(302, `https://meyee.vercel.app/?code=${req.query.code}`);
+      if (state === 'electron') {
+        res.redirect(302, `meyeeapp://oauth?code=${req.query.code}`);
+      } else {
+        res.redirect(302, `https://meyee.vercel.app/?code=${req.query.code}`);
+      }
       return;
     }
 
     const callbackUrl = encodeURIComponent('https://meyee.vercel.app/api/github-auth');
-    const redirectUri = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=gist&redirect_uri=${callbackUrl}`;
+    const redirectUri = `https://github.com/login/oauth/authorize?client_id=${clientId}&scope=gist&redirect_uri=${callbackUrl}&state=${state}`;
     res.redirect(302, redirectUri);
     return;
   }

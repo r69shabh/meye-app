@@ -3,7 +3,20 @@ import './PlatformBridge.js';
 // meye — Main Application Logic
 // ============================================
 
+// --- Deep Link Interceptor for Electron ---
+(function() {
+  const hash = window.location.hash;
+  if (hash && hash.includes('access_token')) {
+    const params = new URLSearchParams(hash.substring(1));
+    if (params.get('state') === 'electron') {
+      window.location.href = `meyeeapp://oauth${hash}`;
+    }
+  }
 
+  if (navigator.userAgent.toLowerCase().includes('electron')) {
+    document.body.classList.add('electron-desktop');
+  }
+})();
 
 // --- Custom Dialog ---
 const CustomDialog = {
@@ -3117,17 +3130,7 @@ const SettingsView = {
         document.getElementById('settingsGitHubOverlay').style.display = 'none';
         return;
       }
-      const authUrl = 'https://meyee.vercel.app/api/github-auth';
-      try {
-        const a = document.createElement('a');
-        a.href = authUrl;
-        a.target = '_self';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } catch (e) {
-        window.location.href = authUrl;
-      }
+      Platform.Auth.authorizeGitHub();
     });
     document.getElementById('btnGitHubSyncNow').addEventListener('click', () => {
       SyncManager.syncToGitHub();

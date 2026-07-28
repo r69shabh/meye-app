@@ -28,7 +28,7 @@ function saveStore(data) {
 
 async function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1200,
+    width: 450,
     height: 800,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -37,6 +37,8 @@ async function createWindow() {
     }
   });
 
+  mainWindow.setAspectRatio(9 / 16);
+
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
     mainWindow.webContents.openDevTools();
@@ -44,22 +46,63 @@ async function createWindow() {
     mainWindow.loadFile(path.join(__dirname, 'dist/index.html'));
   }
   
-  // Enforce new windows open in default browser (except for OAuth popup which we intercept)
+  // Enforce new windows open in default browser
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https://accounts.google.com/o/oauth2/')) {
-      return {
-        action: 'allow',
-        overrideBrowserWindowOptions: {
-          width: 500,
-          height: 600,
-          modal: true,
-          parent: mainWindow
-        }
-      };
-    }
     shell.openExternal(url);
     return { action: 'deny' };
   });
+}
+
+// Deep linking registration
+if (process.defaultApp) {
+  if (process.argv.length >= 2) {
+    app.setAsDefaultProtocolClient('meyeeapp', process.execPath, [path.resolve(process.argv[1])])
+  }
+} else {
+  app.setAsDefaultProtocolClient('meyeeapp')
+}
+
+// macOS specific deep link handler
+app.on('open-url', (event, url) => {
+  event.preventDefault();
+  handleDeepLink(url);
+});
+
+function handleDeepLink(urlStr) {
+  try {
+    const url = new URL(urlStr);
+    if (mainWindow) {
+      mainWindow.webContents.executeJavaScript(`
+        if (typeof SyncManager !== 'undefined') {
+          const hash = "${url.hash}";
+          const search = "${url.search}";
+          if (hash.includes('access_token')) {
+            const params = new URLSearchParams(hash.substring(1));
+            const token = params.get('access_token');
+            if (token) {
+              Platform.Storage.setSecure('meyeGCalToken', token).then(() => {
+                if (typeof SettingsView !== 'undefined') {
+                  SettingsView.prefs.calSync = 'google';
+                  SettingsView.save();
+                  SettingsView.applyAll();
+                }
+                SyncManager.fetchGoogleEvents();
+                alert("Google Calendar Connected!");
+              });
+            }
+          } else if (search.includes('code=')) {
+            const params = new URLSearchParams(search.substring(1));
+            const code = params.get('code');
+            if (code) {
+              SyncManager.exchangeCodeForToken(code);
+            }
+          }
+        }
+      `);
+    }
+  } catch (e) {
+    console.error('Deep link error:', e);
+  }
 }
 
 app.whenReady().then(() => {
@@ -115,46 +158,6 @@ ipcMain.handle('secure-remove', async (event, key) => {
   saveStore(store);
 });
 
-// OAuth
-ipcMain.handle('auth-google', async (event, clientId, scope) => {
-  return new Promise((resolve, reject) => {
-    const dummyRedirectUri = 'com.meye.app://oauth2callback';
-    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${dummyRedirectUri}&response_type=token&scope=${encodeURIComponent(scope)}`;
-    
-    let authWindow = new BrowserWindow({
-      width: 500,
-      height: 600,
-      show: false,
-      webPreferences: { nodeIntegration: false, contextIsolation: true }
-    });
-    
-    authWindow.loadURL(authUrl);
-    authWindow.show();
-    
-    function handleCallback(url) {
-      if (url.startsWith(dummyRedirectUri)) {
-        const hash = url.split('#')[1];
-        if (hash) {
-          const params = new URLSearchParams(hash);
-          const accessToken = params.get('access_token');
-          resolve({ access_token: accessToken });
-        } else {
-          reject(new Error('No hash fragment found'));
-        }
-        authWindow.destroy();
-      }
-    }
-    
-    authWindow.webContents.on('will-redirect', (e, url) => {
-      if (url.startsWith(dummyRedirectUri)) {
-        e.preventDefault();
-        handleCallback(url);
-      }
-    });
-    
-    authWindow.on('closed', () => {
-      authWindow = null;
-      reject(new Error('Window closed by user'));
-    });
-  });
+ipcMain.on('open-external', (event, url) => {
+  shell.openExternal(url);
 });
