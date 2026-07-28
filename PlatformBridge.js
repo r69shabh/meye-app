@@ -155,16 +155,37 @@ const Platform = {
           console.error("Android OAuth error", e);
         }
       } else if (Platform.OS === 'macos') {
-        // Placeholder: Will use Electron shell.openExternal + loopback
-        console.warn('macOS Auth bridge not implemented yet');
+        try {
+          const response = await window.electronAPI.authorizeGoogleCalendar(clientId, scope);
+          if (response && response.access_token) {
+            await Platform.Storage.setSecure('meyeGCalToken', response.access_token);
+            if (typeof SettingsView !== 'undefined') {
+              SettingsView.prefs.calSync = 'google';
+              SettingsView.save();
+              SettingsView.applyAll();
+            }
+            if (typeof SyncManager !== 'undefined') {
+              SyncManager.fetchGoogleEvents();
+            }
+            alert("Google Calendar Connected via macOS Native!");
+          }
+        } catch (e) {
+          console.error("macOS OAuth error", e);
+        }
       }
     }
   },
 
   Storage: {
     async setSecure(key, val) {
-      if (Platform.OS === 'web' || Platform.OS === 'macos') {
+      if (Platform.OS === 'web') {
         localStorage.setItem(key, val);
+      } else if (Platform.OS === 'macos') {
+        try {
+          await window.electronAPI.setSecure(key, val);
+        } catch(e) {
+          localStorage.setItem(key, val); // fallback
+        }
       } else if (Platform.OS === 'android') {
         try {
           await SecureStoragePlugin.set({ key, value: val });
@@ -175,8 +196,14 @@ const Platform = {
     },
 
     async getSecure(key) {
-      if (Platform.OS === 'web' || Platform.OS === 'macos') {
+      if (Platform.OS === 'web') {
         return localStorage.getItem(key);
+      } else if (Platform.OS === 'macos') {
+        try {
+          return await window.electronAPI.getSecure(key);
+        } catch(e) {
+          return localStorage.getItem(key);
+        }
       } else if (Platform.OS === 'android') {
         try {
           const res = await SecureStoragePlugin.get({ key });
@@ -188,8 +215,14 @@ const Platform = {
     },
     
     async removeSecure(key) {
-      if (Platform.OS === 'web' || Platform.OS === 'macos') {
+      if (Platform.OS === 'web') {
         localStorage.removeItem(key);
+      } else if (Platform.OS === 'macos') {
+        try {
+          await window.electronAPI.removeSecure(key);
+        } catch(e) {
+          localStorage.removeItem(key);
+        }
       } else if (Platform.OS === 'android') {
         try {
           await SecureStoragePlugin.remove({ key });
