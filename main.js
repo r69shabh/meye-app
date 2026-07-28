@@ -776,7 +776,7 @@ let currentDate = new Date();
 let selectedDate = new Date();
 let allCards = loadCards();
 
-function init() {
+async function init() {
   // Set header date
   document.getElementById('headerDate').textContent = formatDate(currentDate);
   document.getElementById('headerDateWrapper').addEventListener('click', () => {
@@ -811,7 +811,7 @@ function init() {
   HeatmapView.init();
   TourManager.init();
   SettingsView.init();
-  SyncManager.init();
+  await SyncManager.init();
 
   // Track active overlays for desktop split view
   const appSide = document.getElementById('appSide');
@@ -1457,100 +1457,57 @@ class VoiceRecorder {
   }
 
   _startSpeech() {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
+    if (!Platform.Speech.isSupported()) {
       this.hintEl.style.display = '';
-      this.hintEl.textContent = 'Speech recognition not supported in this browser.';
+      this.hintEl.textContent = 'Speech recognition not supported in this environment.';
       return;
     }
 
-    const startSession = () => {
+    const startSession = async () => {
       if (this.paused || !this.overlay.classList.contains('is-active')) return;
 
-      // Always create a FRESH object — reusing the same object on Android
-      // causes it to replay previous session's results, causing duplication.
-      const rec = new SR();
-      this.recognition = rec;
+      this.recognition = await Platform.Speech.start({
+        onStart: () => {
+          this.hintEl.style.display = '';
+          this.hintEl.textContent = 'Listening...';
+          this.targetAmplitude = 0.04;
+        },
+        onResult: (finalAddition, interimText) => {
+          clearTimeout(this.stalledTimeout);
+          this.hintEl.style.display = 'none';
+          this.targetAmplitude = 0.7;
 
-      // continuous=false: stops after each phrase, then onend fires cleanly.
-      // This prevents Android from keeping a stale audio buffer between restarts.
-      rec.continuous      = false;
-      rec.interimResults  = true;
-      rec.lang            = 'en-US';
-
-      rec.onaudiostart = () => {
-        this.hintEl.style.display = '';
-        this.hintEl.textContent = 'Listening...';
-        this.targetAmplitude = 0.04;
-      };
-      rec.onsoundstart  = () => { this.targetAmplitude = 0.35; };
-      rec.onspeechstart = () => { this.targetAmplitude = 0.55; };
-      rec.onsoundend    = () => { this.targetAmplitude = 0.04; };
-
-      rec.onresult = (event) => {
-        clearTimeout(this.stalledTimeout);
-        this.hintEl.style.display = 'none';
-        this.targetAmplitude = 0.7;
-
-        // Use resultIndex so we ONLY process results new to this event.
-        // This is safe because with continuous=false each session is short.
-        let sessionAddition = '';
-        let interimText = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-          const t = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            sessionAddition += t + ' ';
+          if (finalAddition) {
             this.targetAmplitude = 0.3;
-          } else {
-            interimText = t; // only the latest interim
           }
+
+          this.finalText = this.committedText + finalAddition;
+          this.interimText = interimText;
+          this.finalEl.textContent = this.finalText;
+          this.interimEl.textContent = interimText;
+          this.transcriptBox.scrollTop = this.transcriptBox.scrollHeight;
+        },
+        onError: (e) => {
+          this.targetAmplitude = 0.02;
+          if (e && e.error === 'no-speech') {
+            setTimeout(startSession, 100);
+            return;
+          }
+          this.hintEl.style.display = '';
+          this.hintEl.textContent = 'Mic Error: ' + (e ? e.error : 'unknown') + '. Retrying...';
+          setTimeout(startSession, 1000);
+        },
+        onEnd: () => {
+          if (this.finalText.trim()) {
+            this.committedText = this.finalText;
+          }
+          this.interimEl.textContent = '';
+          this.targetAmplitude = 0.02;
+          setTimeout(startSession, 150);
         }
-
-        // committedText is ONLY updated via onend, never here.
-        // This prevents any double-counting if Android fires the same result twice.
-        this.finalText   = this.committedText + sessionAddition;
-        this.interimText = interimText;
-        this.finalEl.textContent   = this.finalText;
-        this.interimEl.textContent = interimText;
-        this.transcriptBox.scrollTop = this.transcriptBox.scrollHeight;
-      };
-
-      rec.onerror = (e) => {
-        this.targetAmplitude = 0.02;
-        if (e.error === 'no-speech') {
-          // Restart silently on no-speech
-          setTimeout(startSession, 100);
-          return;
-        }
-        this.hintEl.style.display = '';
-        this.hintEl.textContent = 'Mic Error: ' + e.error + '. Retrying...';
-        console.warn('SpeechRecognition error', e.error);
-        setTimeout(startSession, 1000);
-      };
-
-      rec.onend = () => {
-        // Commit the final text from this session before restarting.
-        // finalText already has committedText + sessionAddition baked in.
-        if (this.finalText.trim()) {
-          this.committedText = this.finalText;
-        }
-        // Clear interim display between sessions
-        this.interimEl.textContent = '';
-        this.targetAmplitude = 0.02;
-        // Restart with a fresh object after a short delay
-        setTimeout(startSession, 150);
-      };
-
-      try {
-        rec.start();
-      } catch(e) {
-        this.hintEl.style.display = '';
-        this.hintEl.textContent = 'Could not start. Reload and try again.';
-        console.error('SpeechRecognition start failed', e);
-      }
+      });
     };
 
-    // Timeout: if no transcript appears in 10s, prompt user
     this.stalledTimeout = setTimeout(() => {
       if (!this.interimText && !this.finalText) {
         this.hintEl.style.display = '';
@@ -1578,10 +1535,10 @@ class VoiceRecorder {
     this.paused = !this.paused;
     const btn = document.getElementById('btnPause');
     if (this.paused) {
-      this.recognition?.stop();
+      Platform.Speech.stop(this.recognition);
       btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>`;
     } else {
-      try { this.recognition?.start(); } catch(_) {}
+      this._startSpeech();
       btn.innerHTML = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>`;
     }
   }
@@ -1618,10 +1575,7 @@ class VoiceRecorder {
     clearTimeout(this.stalledTimeout);
     this.targetAmplitude = 0.02;
     if (this.recognition) {
-      this.recognition.onresult = null;
-      this.recognition.onerror = null;
-      this.recognition.onend = null;
-      try { this.recognition.stop(); } catch(_) {}
+      Platform.Speech.stop(this.recognition);
       this.recognition = null;
     }
   }
@@ -2600,8 +2554,9 @@ const SyncManager = {
   // Enable "Device Flow" in the OAuth App settings!
   CLIENT_ID: 'Ov23li20E2Iu1hJubM3e', 
 
-  init() {
-    const savedState = JSON.parse(localStorage.getItem('meyeSyncState') || '{}');
+  async init() {
+    const stateStr = await Platform.Storage.getSecure('meyeSyncState');
+    const savedState = stateStr ? JSON.parse(stateStr) : {};
     this.gistId = savedState.gistId || null;
     this.pat = savedState.pat || null;
     this.githubUsername = savedState.githubUsername || null;
@@ -2618,7 +2573,7 @@ const SyncManager = {
         const hashParams = new URLSearchParams(window.location.hash.substring(1));
         const accessToken = hashParams.get('access_token');
         if (accessToken) {
-          localStorage.setItem('meyeGCalToken', accessToken);
+          await Platform.Storage.setSecure('meyeGCalToken', accessToken);
           if (typeof SettingsView !== 'undefined') {
             SettingsView.prefs.calSync = 'google';
             SettingsView.save();
@@ -2695,7 +2650,7 @@ const SyncManager = {
       
       if (data.access_token) {
         this.pat = data.access_token;
-        localStorage.setItem('meyeSyncState', JSON.stringify({ pat: this.pat, gistId: this.gistId }));
+        await Platform.Storage.setSecure('meyeSyncState', JSON.parse(await Platform.Storage.getSecure('meyeSyncState') || '{}') ? JSON.stringify({ ...JSON.parse(await Platform.Storage.getSecure('meyeSyncState') || '{}'), pat: this.pat, gistId: this.gistId }) : JSON.stringify({ pat: this.pat, gistId: this.gistId }));
         await this.updateStatusUI();
         if (typeof SettingsView !== 'undefined') {
           SettingsView.prefs.ghToken = true;
@@ -2745,7 +2700,7 @@ const SyncManager = {
         const data = await res.json();
         if (res.ok && data.id) {
           this.gistId = data.id;
-          localStorage.setItem('meyeSyncState', JSON.stringify({ pat: this.pat, gistId: this.gistId }));
+          await Platform.Storage.setSecure('meyeSyncState', JSON.parse(await Platform.Storage.getSecure('meyeSyncState') || '{}') ? JSON.stringify({ ...JSON.parse(await Platform.Storage.getSecure('meyeSyncState') || '{}'), pat: this.pat, gistId: this.gistId }) : JSON.stringify({ pat: this.pat, gistId: this.gistId }));
         } else {
           throw new Error('Failed to create Gist');
         }
@@ -2856,7 +2811,7 @@ const SyncManager = {
   },
 
   async fetchGoogleEvents() {
-    const token = localStorage.getItem('meyeGCalToken');
+    const token = await Platform.Storage.getSecure('meyeGCalToken');
     if (!token) return;
     try {
       const startOfDay = new Date();
@@ -2878,7 +2833,7 @@ const SyncManager = {
       const data = await res.json();
       if (data.error) {
         if (data.error.code === 401) {
-          localStorage.removeItem('meyeGCalToken');
+          await Platform.Storage.removeSecure('meyeGCalToken');
           if (typeof SettingsView !== 'undefined' && SettingsView.prefs.calSync === 'google') {
             SettingsView.prefs.calSync = 'none';
             SettingsView.save();
@@ -2980,7 +2935,7 @@ const SyncManager = {
   },
 
   async pushToGoogleCalendar(card) {
-    const token = localStorage.getItem('meyeGCalToken');
+    const token = await Platform.Storage.getSecure('meyeGCalToken');
     if (!token || card.type !== 'calendar') return;
     
     const payload = {
@@ -3016,7 +2971,8 @@ const SyncManager = {
   },
 
   async deleteFromGoogleCalendar(id) {
-    const token = localStorage.getItem('meyeGCalToken');
+    if (!id || !id.startsWith('gcal_')) return;
+    const token = await Platform.Storage.getSecure('meyeGCalToken');
     if (!token || !String(id).startsWith('gcal_')) return;
     
     try {
@@ -3156,7 +3112,7 @@ const SettingsView = {
         // Disconnect
         SyncManager.pat = null;
         SyncManager.githubUsername = null;
-        localStorage.setItem('meyeSyncState', JSON.stringify({ pat: null, gistId: null }));
+        (async () => await Platform.Storage.setSecure('meyeSyncState', JSON.stringify({ pat: null, gistId: null })))();
         document.getElementById('settingsGitHubOverlay').style.display = 'none';
         return;
       }
@@ -3178,11 +3134,11 @@ const SettingsView = {
     });
 
     // Google Calendar Overlay
-    document.getElementById('btnStartGoogleCalLogin').addEventListener('click', () => {
+    document.getElementById('btnStartGoogleCalLogin').addEventListener('click', async () => {
       if (this.prefs.calSync === 'google') {
         // Disconnect
         this.prefs.calSync = 'none';
-        localStorage.removeItem('meyeGCalToken');
+        await Platform.Storage.removeSecure('meyeGCalToken');
         this.save();
         this.applyAll();
         document.getElementById('settingsGoogleCalOverlay').style.display = 'none';
@@ -3190,20 +3146,9 @@ const SettingsView = {
       }
       
       const clientId = '231629020948-p2pspiejpqv582bm3pok4uhq4lodduvj.apps.googleusercontent.com';
-      const redirectUri = encodeURIComponent(window.location.origin);
-      const scope = encodeURIComponent('https://www.googleapis.com/auth/calendar.events');
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${scope}`;
+      const scope = 'https://www.googleapis.com/auth/calendar.events';
       
-      try {
-        const a = document.createElement('a');
-        a.href = authUrl;
-        a.target = '_self'; // PWA usually prefers _self for OAuth so it returns back to the PWA
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } catch (e) {
-        window.location.href = authUrl;
-      }
+      Platform.Auth.authorizeGoogleCalendar(clientId, scope);
       
       document.getElementById('settingsGoogleCalOverlay').style.display = 'none';
     });
