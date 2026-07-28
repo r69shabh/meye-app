@@ -12,6 +12,15 @@
     "vite": "^6.3.0"
   },
   "dependencies": {
+    "@byteowls/capacitor-oauth2": "^5.0.0",
+    "@capacitor-community/speech-recognition": "^7.0.1",
+    "@capacitor/android": "^8.4.2",
+    "@capacitor/browser": "^8.0.4",
+    "@capacitor/cli": "^8.4.2",
+    "@capacitor/core": "^8.4.2",
+    "@capacitor/device": "^8.0.3",
+    "@capacitor/dialog": "^8.0.1",
+    "capacitor-secure-storage-plugin": "^0.13.0",
     "compromise": "^14.16.0",
     "jsdom": "^28.1.0"
   }

@@ -1,11 +1,6 @@
-/**
- * PlatformBridge.js
- * 
- * An abstraction layer for native capabilities (Speech, Auth, Secure Storage)
- * that silently break inside webviews on Android/macOS.
- * 
- * Supports: Web (PWA), Android (Capacitor), macOS (Electron)
- */
+import { SpeechRecognition } from '@capacitor-community/speech-recognition';
+import { OAuth2Client } from '@byteowls/capacitor-oauth2';
+import { SecureStoragePlugin } from 'capacitor-secure-storage-plugin';
 
 const Platform = {
   get OS() {
@@ -24,7 +19,6 @@ const Platform = {
         return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
       }
       if (Platform.OS === 'android') {
-        // Will implement via Capacitor community speech plugin
         return true; 
       }
       return false;
@@ -73,9 +67,42 @@ const Platform = {
       }
 
       if (Platform.OS === 'android') {
-        // Placeholder: Will call Capacitor SpeechRecognition plugin
-        console.warn('Android Speech bridge not implemented yet');
-        return null;
+        try {
+          await SpeechRecognition.requestPermissions();
+          
+          if (onStart) onStart();
+          
+          SpeechRecognition.addListener('partialResults', (data) => {
+            if (data.matches && data.matches.length > 0) {
+              if (onResult) onResult('', data.matches[0]);
+            }
+          });
+
+          SpeechRecognition.start({
+            language: 'en-US',
+            maxResults: 1,
+            prompt: 'Listening...',
+            partialResults: true,
+            popup: false
+          });
+
+          // Capacitor Speech doesn't have a direct onEnd for `popup: false` that works cleanly,
+          // so we'll listen for a stop event if the plugin fires one, or rely on our manual stop.
+          return {
+            isAndroidNative: true,
+            stop: async () => {
+              try {
+                await SpeechRecognition.stop();
+                await SpeechRecognition.removeAllListeners();
+                if (onEnd) onEnd();
+              } catch(e) {}
+            }
+          };
+
+        } catch (e) {
+          if (onError) onError(e);
+          return null;
+        }
       }
     },
 
@@ -86,8 +113,8 @@ const Platform = {
         recognitionObj.onend = null;
         try { recognitionObj.stop(); } catch(e) {}
       }
-      if (Platform.OS === 'android') {
-        // Placeholder: Stop Capacitor plugin
+      if (Platform.OS === 'android' && recognitionObj?.isAndroidNative) {
+        recognitionObj.stop();
       }
     }
   },
@@ -100,8 +127,33 @@ const Platform = {
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${clientId}&redirect_uri=${redirectUri}&response_type=token&scope=${encodedScope}`;
         window.location.href = authUrl;
       } else if (Platform.OS === 'android') {
-        // Placeholder: Will use Capacitor Google Sign-In or OAuth Custom Tabs
-        console.warn('Android Auth bridge not implemented yet');
+        try {
+          const oauth2Options = {
+            appId: clientId,
+            authorizationBaseUrl: "https://accounts.google.com/o/oauth2/auth",
+            responseType: "token",
+            scope: scope,
+            redirectUrl: "com.meye.app:/oauth2redirect",
+            customScheme: "com.meye.app"
+          };
+          
+          const response = await OAuth2Client.authenticate(oauth2Options);
+          
+          if (response && response.access_token) {
+            await Platform.Storage.setSecure('meyeGCalToken', response.access_token);
+            if (typeof SettingsView !== 'undefined') {
+              SettingsView.prefs.calSync = 'google';
+              SettingsView.save();
+              SettingsView.applyAll();
+            }
+            if (typeof SyncManager !== 'undefined') {
+              SyncManager.fetchGoogleEvents();
+            }
+            alert("Google Calendar Connected via Android Custom Tabs!");
+          }
+        } catch (e) {
+          console.error("Android OAuth error", e);
+        }
       } else if (Platform.OS === 'macos') {
         // Placeholder: Will use Electron shell.openExternal + loopback
         console.warn('macOS Auth bridge not implemented yet');
@@ -111,36 +163,39 @@ const Platform = {
 
   Storage: {
     async setSecure(key, val) {
-      if (Platform.OS === 'web') {
+      if (Platform.OS === 'web' || Platform.OS === 'macos') {
         localStorage.setItem(key, val);
       } else if (Platform.OS === 'android') {
-        // Placeholder: Capacitor Secure Storage
-        localStorage.setItem(key, val); // fallback for now
-      } else if (Platform.OS === 'macos') {
-        // Placeholder: Electron safeStorage via IPC
-        localStorage.setItem(key, val); // fallback for now
+        try {
+          await SecureStoragePlugin.set({ key, value: val });
+        } catch(e) {
+          localStorage.setItem(key, val); // fallback
+        }
       }
     },
 
     async getSecure(key) {
-      if (Platform.OS === 'web') {
+      if (Platform.OS === 'web' || Platform.OS === 'macos') {
         return localStorage.getItem(key);
       } else if (Platform.OS === 'android') {
-        // Placeholder: Capacitor Secure Storage
-        return localStorage.getItem(key);
-      } else if (Platform.OS === 'macos') {
-        // Placeholder: Electron safeStorage via IPC
-        return localStorage.getItem(key);
+        try {
+          const res = await SecureStoragePlugin.get({ key });
+          return res.value;
+        } catch(e) {
+          return localStorage.getItem(key);
+        }
       }
     },
     
     async removeSecure(key) {
-      if (Platform.OS === 'web') {
+      if (Platform.OS === 'web' || Platform.OS === 'macos') {
         localStorage.removeItem(key);
       } else if (Platform.OS === 'android') {
-        localStorage.removeItem(key);
-      } else if (Platform.OS === 'macos') {
-        localStorage.removeItem(key);
+        try {
+          await SecureStoragePlugin.remove({ key });
+        } catch(e) {
+          localStorage.removeItem(key);
+        }
       }
     }
   }
