@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/icon.png" />
+  <link rel="apple-touch-icon" href="/icon.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>meyee</title>
+  <meta name="theme-color" content="#000000" />
+  <meta name="description" content="Personal productivity — to-do, calendar, notes" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+  <!-- Google Calendar OAuth -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="https://apis.google.com/js/api.js"></script>
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="app-wrapper" id="appWrapper">
+    <div class="app-container app-container--main" id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-actions">
+        <button class="icon-btn" aria-label="Heatmap" id="btnClipboard">
+          <iconify-icon icon="solar:widget-2-linear" width="22" height="22"></iconify-icon>
+        </button>
+        <button class="icon-btn" aria-label="Settings" id="btnSettings">
+          <iconify-icon icon="solar:settings-linear" width="22" height="22"></iconify-icon>
+        </button>
+      </div>
+      <div style="position:relative; display:inline-block; margin:0; padding:0; cursor:pointer;" id="headerDateWrapper">
+        <h1 class="header-date" id="headerDate" style="pointer-events:none;"></h1>
+      </div>
+    </header>
+
+    <!-- Date Strip -->
+    <div class="date-strip" id="dateStrip">
+      <div class="date-strip-track" id="dateStripTrack">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Card Feed -->
+    <main class="card-feed" id="cardFeed">
+      <!-- Rendered by JS -->
+    </main>
+
+    <!-- Bottom Input Bar -->
+    <div class="bottom-bar">
+      <div class="input-pill" id="inputPill">
+        <span class="input-placeholder">What's on your mind...</span>
+        <button class="mic-btn" aria-label="Voice input" id="btnMic">
+          <iconify-icon icon="solar:microphone-2-linear" width="24" height="24"></iconify-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- End Main Container -->
+    </div>
+
+    <!-- Side Container for Overlays -->
+    <div class="app-container--side" id="appSide">
+      <div class="app-side-inner">
+        <!-- Typed Composer Overlay -->
+    <div class="composer-overlay" id="composerOverlay">
+      <div class="composer-backdrop" id="composerBackdrop"></div>
+      <div class="composer-sheet" id="composerSheet">
+        <div class="composer-drag-handle"></div>
+        <div class="composer-preview" id="composerPreview" style="display:none;"></div>
+        <div class="composer-type-row" id="composerTypeRow">
+          <button class="type-chip active" data-type="auto"><iconify-icon icon="solar:magic-stick-3-linear" width="14" height="14"></iconify-icon>Auto</button>
+          <button class="type-chip" data-type="note"><iconify-icon icon="solar:document-text-linear" width="14" height="14"></iconify-icon>Note</button>
+          <button class="type-chip" data-type="todo"><iconify-icon icon="solar:check-circle-linear" width="14" height="14"></iconify-icon>To-do</button>
+          <button class="type-chip" data-type="calendar"><iconify-icon icon="solar:calendar-linear" width="14" height="14"></iconify-icon>Event</button>
+          <button class="type-chip" data-type="routine"><iconify-icon icon="solar:refresh-circle-linear" width="14" height="14"></iconify-icon>Routine</button>
+        </div>
+        <textarea class="composer-input" id="composerInput" placeholder="What's on your mind..." rows="3"></textarea>
+        <div class="composer-detected" id="composerDetected"></div>
+        <div class="composer-actions">
+          <button class="composer-cancel" id="composerCancel">Cancel</button>
+          <button class="composer-add" id="composerAdd">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Speaking Overlay -->
+    <div class="speaking-overlay" id="speakingOverlay">
+      <button class="close-btn" id="btnCloseOverlay" aria-label="Close">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+      </button>
+
+      <div class="speaking-content">
+        <!-- Live canvas waveform driven by Web Audio API AnalyserNode -->
+        <div class="waveform-wrapper">
+          <canvas id="waveCanvas" class="wave-canvas"></canvas>
+        </div>
+
+        <div class="timer-text" id="timerText">0:00</div>
+
+        <!-- Transcript: interim (grey) + final (white) -->
+        <div class="transcript-box" id="transcriptBox">
+          <span class="transcript-final" id="transcriptFinal"></span><span class="transcript-interim" id="transcriptInterim"></span>
+          <span class="transcript-hint" id="transcriptHint">Start speaking...</span>
+        </div>
+      </div>
+
+      <div class="speaking-controls">
+        <button class="control-btn control-btn--pause" id="btnPause" aria-label="Pause">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+        </button>
+        <button class="control-btn control-btn--done" id="btnDone" aria-label="Done">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </button>
+        <button class="control-btn control-btn--cancel" id="btnCancel" aria-label="Cancel">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Review Overlay -->
+    <div class="review-overlay" id="reviewOverlay">
+      <div class="review-header">
+        <button class="review-back" id="btnReviewBack" aria-label="Back">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <span class="review-title">Review</span>
+        <div style="width:38px"></div>
+      </div>
+
+      <div class="review-body" id="reviewBody">
+        <!-- Filled dynamically by JS -->
+      </div>
+
+      <div class="review-footer">
+        <button class="control-btn control-btn--edit" id="btnEditCard" aria-label="Edit">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+        </button>
+        <button class="control-btn control-btn--done" id="btnConfirmCard" aria-label="Confirm">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </button>
+        <button class="control-btn control-btn--cancel" id="btnReviewCancel" aria-label="Cancel">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Expanded Card Overlay -->
+    <div class="expanded-overlay" id="expandedOverlay">
+      <div class="expanded-header">
+        <button class="expanded-back" id="btnExpandedBack" aria-label="Back">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <span class="expanded-date" id="expandedDate">Sat July 11th, 2026</span>
+        <div style="position: relative;">
+          <button class="expanded-back" id="btnMenuCard" aria-label="Menu">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+          </button>
+          <div class="expanded-menu" id="expandedMenu" style="display: none;">
+            <button id="menuEdit"><iconify-icon icon="solar:pen-linear" width="20" height="20"></iconify-icon> Edit</button>
+            <button id="menuCopy"><iconify-icon icon="solar:copy-linear" width="20" height="20"></iconify-icon> Copy</button>
+            <button id="menuTranscript"><iconify-icon icon="solar:text-square-linear" width="20" height="20"></iconify-icon> Transcript</button>
+            <button id="menuDelete" style="color: #ff453a;"><iconify-icon icon="solar:trash-bin-trash-linear" width="20" height="20"></iconify-icon> Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="expanded-scroll" id="expandedScroll">
+        <!-- Main editor box -->
+        <div class="expanded-card">
+          <div id="expandedEditorBox" class="expanded-editor-box">
+            <!-- Dynamically populated based on type -->
+          </div>
+          <div class="expanded-tags" id="expandedTags">
+            <!-- Tags go here -->
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    <!-- Custom Date/Time Picker Modal -->
+    <div class="schedule-overlay" id="scheduleOverlay">
+      <div class="schedule-sheet" id="scheduleSheet">
+        <div class="schedule-header">
+          <button class="schedule-cancel" id="scheduleCancel">Cancel</button>
+          <div class="schedule-tabs" id="scheduleTabs">
+            <button class="schedule-tab active" data-tab="date">Date</button>
+            <button class="schedule-tab" data-tab="time">Time</button>
+          </div>
+          <button class="schedule-done" id="scheduleDone">Save</button>
+        </div>
+        
+        <div class="schedule-body">
+          <!-- Date Tab -->
+          <div class="schedule-view schedule-view-date active" id="scheduleViewDate">
+            <div class="dt-month-ctrl">
+              <button id="schedulePrevMonth"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg></button>
+              <span id="scheduleMonthLabel" class="dt-month-label">July 2026</span>
+              <button id="scheduleNextMonth"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg></button>
+            </div>
+            <div class="dt-weekdays">
+              <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+            </div>
+            <div class="dt-days" id="scheduleDaysGrid"></div>
+          </div>
+          
+          <!-- Time Tab -->
+          <div class="schedule-view schedule-view-time" id="scheduleViewTime" style="display:none;">
+            <!-- Context controls (To-Do optional time vs Event start/end) -->
+            <div class="schedule-time-context" id="scheduleTimeContext">
+              <!-- Will be injected by JS depending on mode -->
+            </div>
+            <div class="dt-wheels">
+              <div class="dt-wheel" id="scheduleWheelHour"></div>
+              <div class="dt-wheel-sep">:</div>
+              <div class="dt-wheel" id="scheduleWheelMinute"></div>
+              <div class="dt-wheel dt-wheel-ampm" id="scheduleWheelAmPm">
+                <div class="dt-wheel-item" data-val="AM">AM</div>
+                <div class="dt-wheel-item" data-val="PM">PM</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Full Page -->
+    <div class="full-page-view" id="settingsPage">
+      <div class="fp-header">
+        <button class="icon-btn" id="settingsBack" style="margin-left:-8px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <h2 style="font-size: 17px; margin:0 auto; font-weight: 600;">Settings</h2>
+        <div style="width: 32px;"></div>
+      </div>
+
+      <div class="fp-content" style="padding-bottom: 48px;">
+
+        <!-- Section: Personalization -->
+        <div class="settings-section-label">Personalization</div>
+        <div class="settings-section">
+
+          <div class="settings-row" data-setting="appearance" data-options='[{"val":"system","label":"System"},{"val":"light","label":"Light"},{"val":"dark","label":"Dark"}]'>
+            <div class="settings-icon-pill">
+              <iconify-icon icon="solar:sun-linear" width="22" height="22"></iconify-icon>
+            </div>
+            <span class="settings-row-label">Appearance</span>
+            <div class="settings-row-right">
+              <span class="settings-value" id="sv-appearance">System</span>
+              <iconify-icon icon="solar:alt-arrow-right-linear" width="16" height="16" style="color: var(--text-tertiary);"></iconify-icon>
+            </div>
+          </div>
+
+          <div class="settings-row-sep"></div>
+
+          <div class="settings-row" data-setting="accentColor" data-options='[{"val":"#FF453A","label":"Red"},{"val":"#5E9CFF","label":"Blue"},{"val":"#BF5AF2","label":"Violet"},{"val":"#FF9F43","label":"Amber"},{"val":"#34C759","label":"Green"},{"val":"#FF375F","label":"Pink"}]'>
+            <div class="settings-icon-pill">
+              <iconify-icon icon="solar:palette-linear" width="22" height="22"></iconify-icon>
+            </div>
+            <span class="settings-row-label">Accent Color</span>
+            <div class="settings-row-right">
+              <span class="settings-value" id="sv-accentColor">Red</span>
+              <iconify-icon icon="solar:alt-arrow-right-linear" width="16" height="16" style="color: var(--text-tertiary);"></iconify-icon>
+            </div>
+          </div>
+
+          <div class="settings-row-sep"></div>
+
+
+
+        </div>
+
+        <!-- Section: Notifications -->
+        <div class="settings-section-label">Notifications</div>
+        <div class="settings-section">
+
+          <div class="settings-row" data-setting="defaultReminder" data-options='[{"val":"none","label":"None"},{"val":"0","label":"At time of event"},{"val":"5","label":"5 minutes before"},{"val":"15","label":"15 minutes before"},{"val":"30","label":"30 minutes before"},{"val":"60","label":"1 hour before"}]'>
+            <div class="settings-icon-pill">
+              <iconify-icon icon="solar:bell-linear" width="22" height="22"></iconify-icon>
+            </div>
+            <span class="settings-row-label">Default Reminder</span>
+            <div class="settings-row-right">
+              <span class="settings-value" id="sv-defaultReminder">None</span>
+              <iconify-icon icon="solar:alt-arrow-right-linear" width="16" height="16" style="color: var(--text-tertiary);"></iconify-icon>
+            </div>
+          </div>
+
+          <div class="settings-row-sep"></div>
+
+          <div class="settings-row" data-setting="notifSound" data-options='[{"val":"none","label":"None"},{"val":"default","label":"Default"},{"val":"chime","label":"Double Chime"},{"val":"synth","label":"Synth Bell"}]'>
+            <div class="settings-icon-pill">
+              <iconify-icon icon="solar:volume-loud-linear" width="22" height="22"></iconify-icon>
+            </div>
+            <span class="settings-row-label">Sound</span>
+            <div class="settings-row-right">
+              <span class="settings-value" id="sv-notifSound">Default</span>
+              <iconify-icon icon="solar:alt-arrow-right-linear" width="16" height="16" style="color: var(--text-tertiary);"></iconify-icon>
+            </div>
+          </div>
+
+          <div class="settings-row-sep"></div>
+
+          <div class="settings-row" data-setting="bannerStyle" data-options='[{"val":"minimal","label":"Minimal"},{"val":"full","label":"Full"}]'>
+            <div class="settings-icon-pill">
+              <iconify-icon icon="solar:text-square-linear" width="22" height="22"></iconify-icon>
+            </div>
+            <span class="settings-row-label">Banner Style</span>
+            <div class="settings-row-right">
+              <span class="settings-value" id="sv-bannerStyle">Minimal</span>
+              <iconify-icon icon="solar:alt-arrow-right-linear" width="16" height="16" style="color: var(--text-tertiary);"></iconify-icon>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Section: Sync & Backup -->
+        <div class="settings-section-label">Sync & Backup</div>
+        <div class="settings-section">
+
+          <div class="settings-row" id="settingsGoogleCalSync">
+            <div class="settings-icon-pill">
+              <iconify-icon icon="solar:calendar-add-linear" width="22" height="22"></iconify-icon>
+            </div>
+            <span class="settings-row-label">Google Calendar</span>
+            <div class="settings-row-right">
+              <span class="settings-value" id="sv-calSyncStatus"></span>
+              <iconify-icon icon="solar:alt-arrow-right-linear" width="16" height="16" style="color: var(--text-tertiary);"></iconify-icon>
+            </div>
+          </div>
+
+          <div class="settings-row-sep"></div>
+
+          <div class="settings-row" id="settingsGitHubSync">
+            <div class="settings-icon-pill">
+              <i class="fa-brands fa-github" style="font-size: 22px;"></i>
+            </div>
+            <span class="settings-row-label">GitHub Sync</span>
+            <div class="settings-row-right">
+              <span class="settings-value" id="sv-githubSyncStatus"></span>
+              <iconify-icon icon="solar:alt-arrow-right-linear" width="16" height="16" style="color: var(--text-tertiary);"></iconify-icon>
+            </div>
+          </div>
+
+          <div class="settings-row-sep"></div>
+
+          <div class="settings-row" id="settingsExportBackup">
+            <div class="settings-icon-pill">
+              <iconify-icon icon="solar:export-linear" width="22" height="22"></iconify-icon>
+            </div>
+            <span class="settings-row-label">Export JSON Backup</span>
+            <div class="settings-row-right">
+              <iconify-icon icon="solar:download-minimalistic-linear" width="16" height="16" style="color: var(--text-tertiary);"></iconify-icon>
+            </div>
+          </div>
+
+          <div class="settings-row-sep"></div>
+          
+          <!-- Hidden file input for import -->
+          <input type="file" id="importBackupFile" accept=".json" style="display:none;" />
+          <div class="settings-row" id="settingsImportBackup" style="opacity: 0.5; pointer-events: none;">
+            <div class="settings-icon-pill">
+              <iconify-icon icon="solar:import-linear" width="22" height="22"></iconify-icon>
+            </div>
+            <span class="settings-row-label">Import JSON Backup</span>
+            <div class="settings-row-right">
+              <iconify-icon icon="solar:upload-minimalistic-linear" width="16" height="16" style="color: var(--text-tertiary);"></iconify-icon>
+            </div>
+          </div>
+
+          <div class="settings-row-sep"></div>
+
+          <div class="settings-row" id="settingsPrivacyPolicy">
+            <div class="settings-icon-pill">
+              <iconify-icon icon="solar:shield-check-linear" width="22" height="22"></iconify-icon>
+            </div>
+            <span class="settings-row-label">Privacy Policy</span>
+            <div class="settings-row-right">
+              <iconify-icon icon="solar:link-minimalistic-linear" width="16" height="16" style="color: var(--text-tertiary);"></iconify-icon>
+            </div>
+          </div>
+          
+          <div class="settings-row-sep"></div>
+
+          <div class="settings-row" id="settingsTermsOfService">
+            <div class="settings-icon-pill">
+              <iconify-icon icon="solar:document-text-linear" width="22" height="22"></iconify-icon>
+            </div>
+            <span class="settings-row-label">Terms of Service</span>
+            <div class="settings-row-right">
+              <iconify-icon icon="solar:link-minimalistic-linear" width="16" height="16" style="color: var(--text-tertiary);"></iconify-icon>
+            </div>
+          </div>
+
+          <div class="settings-row-sep"></div>
+
+          <div class="settings-row settings-row--destructive" id="settingsResetAll">
+            <div class="settings-icon-pill" style="color:#FF453A;">
+              <iconify-icon icon="solar:refresh-linear" width="22" height="22"></iconify-icon>
+            </div>
+            <span class="settings-row-label" style="color: #FF453A;">Reset All Data</span>
+            <div class="settings-row-right">
+              <iconify-icon icon="solar:alt-arrow-right-linear" width="16" height="16" style="color: var(--text-tertiary);"></iconify-icon>
+            </div>
+          </div>
+
+        </div>
+
+        <div style="text-align: center; margin-top: 24px; padding-bottom: 24px;">
+          <p style="font-size: 13px; color: var(--text-tertiary); margin: 0; font-weight: 500; letter-spacing: 0.3px;">
+            Made with <iconify-icon icon="solar:heart-bold" style="color: #FF375F; vertical-align: middle;"></iconify-icon> by r69
+          </p>
+        </div>
+
+      </div>
+    </div> <!-- End of settingsPage -->
+
+    <!-- Shared floating dropdown panel -->
+    <div class="settings-dropdown" id="settingsDropdown" style="display:none;"></div>
+    
+    <!-- GitHub Sync overlay -->
+    <div class="settings-reset-confirm" id="settingsGitHubOverlay" style="display:none;">
+      <div class="settings-reset-sheet">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <p style="font-size:17px; font-weight:600; margin:0; color:var(--text-primary);">GitHub Sync</p>
+          <button id="btnGitHubSyncNow" style="display:none; background:var(--text-primary); color:var(--bg-primary); padding:6px 12px; border-radius:12px; border:none; font-weight:600; cursor:pointer;">Sync Now</button>
+        </div>
+        <p style="font-size:14px; color:var(--text-secondary); margin-bottom:16px;">Securely sync your tasks and routines across all devices using GitHub Gists. Zero servers, maximum privacy.</p>
+        
+        <div style="margin: 8px 0;">
+          <div style="margin: 16px 0; border-top: 1px solid rgba(255,255,255,0.1); padding-top:16px;">
+            <button id="btnStartGitHubLogin" type="button" style="width:100%; min-height:44px; background:var(--text-primary); color:var(--bg-primary); border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer;">Connect with GitHub</button>
+          </div>
+
+          <button id="btnCancelGitHubPat" style="width:100%; padding:14px; background:transparent; color:var(--text-secondary); border:none; border-radius:12px; font-size:17px; font-weight:600; cursor:pointer;">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Google Calendar Overlay -->
+    <div class="settings-reset-confirm" id="settingsGoogleCalOverlay" style="display:none;">
+      <div class="settings-reset-sheet">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <p style="font-size:17px; font-weight:600; margin:0; color:var(--text-primary);">Google Calendar Sync</p>
+        </div>
+        <p style="font-size:14px; color:var(--text-secondary); margin-bottom:16px;">Securely fetch your upcoming events from Google Calendar. Events will appear directly in your daily feed.</p>
+        
+        <div>
+          <button class="btn-primary" id="btnStartGoogleCalLogin" style="width:100%; margin-bottom:12px; padding:14px; background:var(--text-primary); color:var(--bg-primary); border:none; border-radius:12px; font-size:17px; font-weight:600; cursor:pointer;">Link Google Calendar</button>
+          <button id="btnGoogleSyncNow" style="width:100%; margin-bottom:12px; padding:14px; background:var(--glass-bg); color:var(--text-primary); border:1px solid var(--border-color); border-radius:12px; font-size:17px; font-weight:600; cursor:pointer; display:none;">Sync Now</button>
+        </div>
+
+        <button id="btnCancelGoogleCal" style="width:100%; padding:14px; background:transparent; color:var(--text-secondary); border:none; border-radius:12px; font-size:17px; font-weight:600; cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Reset confirm overlay -->
+    <div class="settings-reset-confirm" id="settingsResetConfirm" style="display:none;">
+      <div class="settings-reset-sheet">
+        <p style="font-size:17px; font-weight:600; margin-bottom:8px; color:var(--text-primary);">Reset All Data?</p>
+        <p style="font-size:14px; color:var(--text-secondary); margin-bottom:24px;">This will delete all cards, settings, and history. This cannot be undone.</p>
+        <button id="settingsResetConfirmBtn" style="width:100%; padding:14px; background:#FF453A; color:#fff; border:none; border-radius:12px; font-size:17px; font-weight:600; cursor:pointer; margin-bottom:8px;">Reset Everything</button>
+        <button id="settingsResetCancelBtn" style="width:100%; padding:14px; background:transparent; color:var(--text-secondary); border:none; border-radius:12px; font-size:17px; cursor:pointer;">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Full Page Heatmap -->
+    <div class="full-page-view" id="heatmapPage">
+      <div class="fp-header">
+        <button class="icon-btn" id="heatmapBack" style="margin-left:-8px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+        </button>
+        <h2 style="font-size: 17px; margin:0 auto; font-weight: 600;">Activity</h2>
+        <div style="width: 32px;"></div> <!-- Spacer for center alignment -->
+      </div>
+      
+      <div class="fp-content" id="heatmapContent">
+        <!-- Rendered by JS -->
+      </div>
+    </div>
+
+    <!-- Onboarding Page (Tour) -->
+    <div class="full-page-view" id="onboardingPage" style="z-index: 500; display: flex; flex-direction: column; background: var(--bg-primary);">
+      
+      <!-- Slides Container -->
+      <div id="tourSlides" style="flex: 1; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center;">
+        
+        <!-- Slide 1: Welcome -->
+        <div class="tour-slide is-active" data-slide="0" style="text-align: center; position: absolute; width: 100%; transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out);">
+          <h1 style="font-size: 48px; font-weight: 700; margin: 0; background: linear-gradient(135deg, #fff 0%, #a0a0a0 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">meyee</h1>
+          <p style="font-size: 16px; color: var(--text-secondary); margin-top: 12px; font-weight: 400;">Your beautifully focused life.</p>
+        </div>
+
+        <!-- Slide 2: Smart Voice -->
+        <div class="tour-slide" data-slide="1" style="text-align: center; position: absolute; width: 100%; opacity: 0; transform: translateX(40px); transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out);">
+          <h2 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin: 0 0 12px 0;">Speak Your Mind</h2>
+          <p style="font-size: 15px; color: var(--text-secondary); max-width: 280px; margin: 0 auto; line-height: 1.5;">Use intelligent voice mode to instantly capture thoughts. NLP automatically categorizes them for you.</p>
+          <div class="tour-mockup-wrapper">
+            <div class="tour-mockup-bar">
+              <span>"Remind me to call mom at 5pm"</span>
+              <div class="tour-mockup-mic">
+                <iconify-icon icon="solar:microphone-3-bold" width="18" height="18"></iconify-icon>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 3: Notes -->
+        <div class="tour-slide" data-slide="2" style="text-align: center; position: absolute; width: 100%; opacity: 0; transform: translateX(40px); transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out);">
+          <h2 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin: 0 0 12px 0;">Effortless Capture</h2>
+          <p style="font-size: 15px; color: var(--text-secondary); max-width: 280px; margin: 0 auto; line-height: 1.5;">Jot down fleeting thoughts with automatic tags and rich text.</p>
+          <div class="tour-mockup-wrapper">
+            <div class="card note-card" style="text-align: left; margin: 0;">
+              <div class="card-content">The apartment stopped being a place and the moment it became a choice you were making together.</div>
+              <div class="card-tags">
+                <span class="card-tag">Reflection</span>
+                <span class="card-tag">Moving Out</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 4: To-Dos & Events -->
+        <div class="tour-slide" data-slide="3" style="text-align: center; position: absolute; width: 100%; opacity: 0; transform: translateX(40px); transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out);">
+          <h2 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin: 0 0 12px 0;">Plan Your Day</h2>
+          <p style="font-size: 15px; color: var(--text-secondary); max-width: 280px; margin: 0 auto; line-height: 1.5;">Stay on top of your schedule with actionable checklists and synced calendar events.</p>
+          <div class="tour-mockup-wrapper" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="card todo-card" style="text-align: left; margin: 0;">
+              <div class="card-meta">
+                <iconify-icon icon="solar:bell-linear" width="14" height="14"></iconify-icon>
+                <span>21:42</span>
+              </div>
+              <div class="card-content">
+                <div class="checkbox is-checked"><iconify-icon icon="solar:check-read-linear" width="16" height="16"></iconify-icon></div>
+                <span style="text-decoration: line-through; opacity: 0.5;">Read chapter 4 of the systems design book</span>
+              </div>
+            </div>
+            <div class="card calendar-card" style="text-align: left; margin: 0;">
+              <div class="card-meta">
+                <iconify-icon icon="solar:calendar-linear" width="14" height="14"></iconify-icon>
+                <span>10:00 - 10:30</span>
+              </div>
+              <div class="card-content">Coffee with Arjun</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 5: Routines -->
+        <div class="tour-slide" data-slide="4" style="text-align: center; position: absolute; width: 100%; opacity: 0; transform: translateX(40px); transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out);">
+          <h2 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin: 0 0 12px 0;">Build Habits</h2>
+          <p style="font-size: 15px; color: var(--text-secondary); max-width: 280px; margin: 0 auto; line-height: 1.5;">Create recurring daily routines with sub-tasks to build consistency.</p>
+          <div class="tour-mockup-wrapper">
+            <div class="card routine-card" style="text-align: left; margin: 0;">
+              <div class="card-meta">
+                <iconify-icon icon="solar:refresh-circle-linear" width="14" height="14"></iconify-icon>
+                <span>Daily</span>
+              </div>
+              <div class="card-content" style="margin-bottom:12px;">Calisthenics — Pull day</div>
+              <div class="routine-items">
+                <div class="routine-item">
+                  <div class="checkbox"><iconify-icon icon="solar:check-read-linear" width="16" height="16"></iconify-icon></div>
+                  <span>Bent over row (3x15)</span>
+                </div>
+                <div class="routine-item">
+                  <div class="checkbox"><iconify-icon icon="solar:check-read-linear" width="16" height="16"></iconify-icon></div>
+                  <span>Inverted row (3x15)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 6: Heatmap -->
+        <div class="tour-slide" data-slide="5" style="text-align: center; position: absolute; width: 100%; opacity: 0; transform: translateX(40px); transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out);">
+          <h2 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin: 0 0 12px 0;">Track Consistency</h2>
+          <p style="font-size: 15px; color: var(--text-secondary); max-width: 280px; margin: 0 auto; line-height: 1.5;">Watch your routines and activities grow in a beautiful yearly dot-matrix view.</p>
+          <div class="tour-mockup-wrapper">
+            <div class="card" style="padding: 20px;">
+              <h3 style="font-size:15px; font-weight:600; margin:0; text-align:left;">Calisthenics</h3>
+              <div class="tour-mockup-grid">
+                <div class="tour-mockup-dot"></div>
+                <div class="tour-mockup-dot level-1"></div>
+                <div class="tour-mockup-dot level-2"></div>
+                <div class="tour-mockup-dot level-3"></div>
+                <div class="tour-mockup-dot level-1"></div>
+                <div class="tour-mockup-dot"></div>
+                <div class="tour-mockup-dot"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 7: Calendar Sync -->
+        <div class="tour-slide" data-slide="6" style="text-align: center; position: absolute; width: 100%; opacity: 0; transform: translateX(40px); transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out);">
+          <h2 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin: 0 0 12px 0;">Google Calendar</h2>
+          <p style="font-size: 15px; color: var(--text-secondary); max-width: 280px; margin: 0 auto; line-height: 1.5;">Automatically fetch your daily meetings so everything is in one place.</p>
+          <div class="tour-mockup-wrapper">
+            <div style="background: var(--bg-secondary); border-radius: 16px; padding: 32px 24px; text-align: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 24px;">
+              <iconify-icon icon="logos:google-calendar" style="font-size: 48px; margin-bottom: 16px;"></iconify-icon>
+              <h3 style="margin: 0 0 12px 0; font-size: 20px;">Seamless Sync</h3>
+              <p style="font-size:13px; color:var(--text-tertiary); margin:0 0 16px 0;">Read-only access to your schedule.</p>
+              <button class="btn-primary" id="btnTourGoogleSync" style="width:100%; padding:14px; background:var(--text-primary); color:var(--bg-primary); border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer;">Connect Calendar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 8: Backup/Sync -->
+        <div class="tour-slide" data-slide="7" style="text-align: center; position: absolute; width: 100%; opacity: 0; transform: translateX(40px); transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out);">
+          <h2 style="font-size: 28px; font-weight: 600; color: var(--text-primary); margin: 0 0 12px 0;">Your Data, Anywhere</h2>
+          <p style="font-size: 15px; color: var(--text-secondary); max-width: 280px; margin: 0 auto; line-height: 1.5;">Completely local, lightning fast. Sync it across all your devices using GitHub Gists.</p>
+          <div class="tour-mockup-wrapper">
+            <div style="background: var(--bg-secondary); border-radius: 16px; padding: 32px 24px; text-align: center; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 24px;">
+              <i class="fa-brands fa-github" style="font-size: 48px; color: #fff; margin-bottom: 16px;"></i>
+              <h3 style="margin: 0 0 12px 0; font-size: 20px;">Bring Your Own Cloud</h3>
+              <p style="font-size:13px; color:var(--text-tertiary); margin:0 0 16px 0;">Zero servers, maximum privacy.</p>
+              <button class="btn-primary" id="btnTourGitHubSync" style="width:100%; padding:14px; background:var(--text-primary); color:var(--bg-primary); border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer;">Connect GitHub</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Slide 9: Get Started -->
+        <div class="tour-slide" data-slide="8" style="text-align: center; position: absolute; width: 100%; opacity: 0; transform: translateX(40px); transition: opacity 0.4s var(--ease-out), transform 0.4s var(--ease-out);">
+          <h2 style="font-size: 32px; font-weight: 700; color: var(--text-primary); margin: 0 0 12px 0;">You're All Set!</h2>
+          <p style="font-size: 16px; color: var(--text-secondary); max-width: 280px; margin: 0 auto 32px auto; line-height: 1.5;">meyee is ready. Time to focus on what matters.</p>
+          <button id="btnTourFinish" style="padding: 16px 32px; background: var(--accent-primary); color: #fff; border: none; border-radius: 999px; font-size: 18px; font-weight: 600; cursor: pointer; transition: transform 0.2s;">Enter meyee</button>
+        </div>
+        
+      </div>
+
+      <!-- Bottom Bar (Nav) -->
+      <div class="tour-nav-bar">
+        <button id="btnSkipTour" class="tour-btn-skip">Skip</button>
+        <div class="tour-dots" id="tourDots">
+          <div class="tour-dot"></div>
+          <div class="tour-dot"></div>
+          <div class="tour-dot"></div>
+          <div class="tour-dot"></div>
+          <div class="tour-dot"></div>
+          <div class="tour-dot"></div>
+          <div class="tour-dot"></div>
+          <div class="tour-dot"></div>
+          <div class="tour-dot"></div>
+        </div>
+        <button id="btnTourNext" class="tour-btn-next">Next</button>
+      </div>
+    </div>
+
+    <!-- End Side Container -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom Warning Dialog -->
+  <div class="custom-dialog-overlay" id="customDialogOverlay">
+    <div class="custom-dialog-modal">
+      <h3 class="custom-dialog-title" id="customDialogTitle">Warning</h3>
+      <p class="custom-dialog-message" id="customDialogMessage">Are you sure?</p>
+      <div class="custom-dialog-actions">
+        <button class="custom-dialog-btn cancel" id="customDialogCancel">Cancel</button>
+        <button class="custom-dialog-btn confirm" id="customDialogConfirm">Discard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Banner -->
+  <div class="notif-banner" id="notifBanner">
+    <div class="notif-banner-inner">
+      <div class="notif-banner-icon">
+        <iconify-icon icon="solar:bell-bing-bold" width="24" height="24"></iconify-icon>
+      </div>
+      <div class="notif-banner-content">
+        <div class="notif-banner-title" id="notifBannerTitle">Title</div>
+        <div class="notif-banner-desc" id="notifBannerDesc" style="display:none;">Description</div>
+      </div>
+      <button class="notif-banner-close" id="notifBannerClose">
+        <iconify-icon icon="solar:close-circle-linear" width="24" height="24"></iconify-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Update Available Toast -->
+  <button class="update-toast" id="updateToast" type="button" aria-live="polite">
+    Update available. Tap to refresh.
+  </button>
+
+  <script type="module" src="/main.js"></script>
+</body>
+</html>

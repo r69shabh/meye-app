@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Privacy Policy - Meye</title>
+  <style>
+    :root {
+      --bg-primary: #000000;
+      --text-primary: #FFFFFF;
+      --text-secondary: #8E8E93;
+      --accent-primary: #FF453A;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+    .updated {
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+    h2 {
+      font-size: 20px;
+      margin-top: 32px;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    p, li {
+      color: var(--text-secondary);
+      font-size: 16px;
+      margin-bottom: 16px;
+    }
+    ul {
+      margin-bottom: 16px;
+      padding-left: 20px;
+    }
+    a {
+      color: var(--accent-primary);
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+    .back-btn {
+      display: inline-block;
+      margin-bottom: 24px;
+      color: var(--accent-primary);
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <a href="/" class="back-btn">← Back to Meye</a>
+    <h1>Privacy Policy</h1>
+    <div class="updated">Last updated: July 2026</div>
+
+    <h2>1. Introduction</h2>
+    <p>Meye ("we", "our", or "us") is committed to protecting your privacy. Meye is a purely client-side progressive web application designed to help you organize your daily tasks, routines, and schedule.</p>
+
+    <h2>2. Data Storage & Privacy</h2>
+    <p>Meye is built with a "local-first" architecture. This means:</p>
+    <ul>
+      <li>All your data, including tasks, habits, and notes, is stored locally on your own device using browser storage (localStorage).</li>
+      <li>We do not have a backend database.</li>
+      <li>We do not collect, store, sell, or share any of your personal data.</li>
+    </ul>
+
+    <h2>3. Third-Party Services (Google Calendar & GitHub)</h2>
+    <p>Meye offers optional integrations with Google Calendar and GitHub. If you choose to enable these integrations, you authorize Meye to act on your behalf directly from your device:</p>
+    <ul>
+      <li><strong>Google Calendar:</strong> Meye requests access to read, edit, and create events on your primary Google Calendar (the `calendar.events` scope). This data is fetched directly from Google's servers to your device. Meye never routes your calendar data through any intermediary servers. Your Google OAuth token is stored locally on your device.</li>
+      <li><strong>GitHub Gist:</strong> If you use the backup sync feature, Meye uploads an encrypted JSON file of your local data to a private GitHub Gist on your account.</li>
+    </ul>
+    
+    <h2>4. How We Use Google User Data</h2>
+    <p>Meye's use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank">Google API Services User Data Policy</a>, including the Limited Use requirements. Specifically:</p>
+    <ul>
+      <li>Your Google Calendar data is solely used to display your schedule within the Meye app and to sync tasks you create in Meye back to your calendar.</li>
+      <li>We do not share your Google data with third-party tools, AI models, or advertising networks.</li>
+    </ul>
+
+    <h2>5. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. Any changes will be reflected on this page.</p>
+
+    <h2>6. Contact Us</h2>
+    <p>Since Meye is an open-source/personal project, if you have any questions or concerns about this privacy policy, please contact the developer via the project's repository.</p>
+  </div>
+</body>
+</html>
