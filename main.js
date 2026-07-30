@@ -14,7 +14,24 @@ import './PlatformBridge.js';
   }
 
   if (navigator.userAgent.toLowerCase().includes('electron')) {
-    document.body.classList.add('electron-desktop');
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const wrapper = document.querySelector('.app-wrapper');
+          if (wrapper) {
+            const hasActive = wrapper.classList.contains('has-active-overlay');
+            if (window.electronAPI && window.electronAPI.setOverlayState) {
+              window.electronAPI.setOverlayState(hasActive);
+            }
+          }
+        }
+      });
+    });
+    // We must wait for DOMContentLoaded to observe
+    document.addEventListener('DOMContentLoaded', () => {
+      const wrapper = document.querySelector('.app-wrapper');
+      if (wrapper) observer.observe(wrapper, { attributes: true });
+    });
   }
 })();
 
@@ -1423,18 +1440,19 @@ class VoiceRecorder {
     const W = this.canvas.width;
     const H = this.canvas.height;
 
+    const handleMicAmplitude = (e) => {
+      if (this.speechSession && this.speechSession.isMacNative) {
+        this.targetAmplitude = e.detail;
+      }
+    };
+    window.addEventListener('mic-amplitude', handleMicAmplitude);
+
     const draw = () => {
       this.animFrame = requestAnimationFrame(draw);
 
-      // Smoothly interpolate currentAmplitude toward targetAmplitude
-      this.currentAmplitude += (this.targetAmplitude - this.currentAmplitude) * 0.15;
-
-      // Add natural jitter when sound is active
-      let val = this.currentAmplitude;
-      if (val > 0.05) {
-        val = val + (Math.random() - 0.5) * val * 0.8;
-        val = Math.max(0.02, Math.min(1.0, val));
-      }
+      // Fast interpolation toward targetAmplitude for low latency
+      this.currentAmplitude += (this.targetAmplitude - this.currentAmplitude) * 0.4;
+      let val = Math.max(0.02, Math.min(1.0, this.currentAmplitude));
 
       this.waveHistory.push(val);
       if (this.waveHistory.length > this.MAX_BARS) {
@@ -1512,6 +1530,12 @@ class VoiceRecorder {
           setTimeout(startSession, 1000);
         },
         onEnd: () => {
+          if (this.isProcessingFinish) {
+            this.isProcessingFinish = false;
+            this.recognition = null;
+            this._finalizeAndReview();
+            return;
+          }
           if (this.finalText.trim()) {
             this.committedText = this.finalText;
           }
@@ -1558,6 +1582,22 @@ class VoiceRecorder {
   }
 
   finish() {
+    if (this.recognition && this.recognition.isMacNative) {
+      clearInterval(this.timerInterval);
+      cancelAnimationFrame(this.animFrame);
+      clearTimeout(this.stalledTimeout);
+      this.hintEl.style.display = '';
+      this.hintEl.textContent = 'Processing AI Model...';
+      this.targetAmplitude = 0.02;
+      this.isProcessingFinish = true;
+      Platform.Speech.stop(this.recognition);
+      return;
+    }
+    
+    this._finalizeAndReview();
+  }
+  
+  _finalizeAndReview() {
     this._stopAll();
     const fullText = (this.finalText + ' ' + (this.interimText || '')).trim();
     this.finalText = fullText;
@@ -1578,6 +1618,7 @@ class VoiceRecorder {
 
   cancel() {
     this._stopAll();
+    this.isProcessingFinish = false;
     this.overlay.classList.remove('is-active');
     this.reviewOverlay.classList.remove('is-active');
     OverlayManager.notifyClosed(this);
@@ -3443,3 +3484,4 @@ function bindInputBarEvents() {
 
 // --- Boot ---
 document.addEventListener('DOMContentLoaded', init);
+window.SyncManager = SyncManager; window.SettingsView = SettingsView;

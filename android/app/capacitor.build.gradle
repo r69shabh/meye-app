@@ -11,9 +11,11 @@ apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
 dependencies {
     implementation project(':byteowls-capacitor-oauth2')
     implementation project(':capacitor-community-speech-recognition')
+    implementation project(':capacitor-app')
     implementation project(':capacitor-browser')
     implementation project(':capacitor-device')
     implementation project(':capacitor-dialog')
+    implementation project(':capawesome-capacitor-google-sign-in')
     implementation project(':capacitor-secure-storage-plugin')
 
 }

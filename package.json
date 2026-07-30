@@ -1,7 +1,7 @@
 {
   "name": "meyee",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.0-alpha",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -9,11 +9,30 @@
     "preview": "vite preview",
     "start:electron": "electron main.cjs",
     "dev:electron": "NODE_ENV=development electron main.cjs",
-    "dev:all": "concurrently \"npm run dev\" \"wait-on tcp:5173 && npm run dev:electron\""
+    "dist": "vite build && electron-builder"
+  },
+  "build": {
+    "appId": "com.meye.app",
+    "productName": "Meye",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": ["dmg"],
+      "icon": "build/icon.png"
+    },
+    "files": [
+      "dist/**/*",
+      "main.cjs",
+      "preload.cjs",
+      "src-mac/**/*"
+    ]
   },
   "devDependencies": {
     "concurrently": "^10.0.4",
     "electron": "^43.2.0",
+    "electron-builder": "^26.15.3",
     "vite": "^6.3.0",
     "wait-on": "^9.1.0"
   },
@@ -21,13 +40,17 @@
     "@byteowls/capacitor-oauth2": "^5.0.0",
     "@capacitor-community/speech-recognition": "^7.0.1",
     "@capacitor/android": "^8.4.2",
+    "@capacitor/app": "^8.1.1",
     "@capacitor/browser": "^8.0.4",
     "@capacitor/cli": "^8.4.2",
     "@capacitor/core": "^8.4.2",
     "@capacitor/device": "^8.0.3",
     "@capacitor/dialog": "^8.0.1",
+    "@capawesome/capacitor-google-sign-in": "^0.1.2",
+    "@xenova/transformers": "^2.17.2",
     "capacitor-secure-storage-plugin": "^0.13.0",
     "compromise": "^14.16.0",
-    "jsdom": "^28.1.0"
+    "jsdom": "^28.1.0",
+    "puppeteer": "^25.4.0"
   }
 }
