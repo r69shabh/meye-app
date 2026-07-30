@@ -29,7 +29,8 @@
       "dist/**/*",
       "main.cjs",
       "preload.cjs",
-      "src-mac/**/*"
+      "src-mac/**/*",
+      "package.json"
     ]
   },
   "devDependencies": {
