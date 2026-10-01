@@ -1,0 +1,46 @@
+// !$*UTF8*$!
+{
+archiveVersion = 1; classes = {}; objectVersion = 56;
+objects = {
+93F6EE61EA3366B0462A2750 = {isa = PBXShellScriptBuildPhase; buildActionMask = 2147483647; files = (); inputPaths = ("$(SRCROOT)/Resources/AppIcon.base64"); outputPaths = ("$(SRCROOT)/Meye/Assets.xcassets/AppIcon.appiconset/AppIcon.png"); runOnlyForDeploymentPostprocessing = 0; shellPath = /bin/sh; shellScript = "set -eu\n/usr/bin/base64 -D -i \"$SRCROOT/Resources/AppIcon.base64\" -o \"$SRCROOT/Meye/Assets.xcassets/AppIcon.appiconset/AppIcon.png\"\n"; };
+939ACC495B3CACB37576D9C3 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Meye/Core/CaptureParser.swift"; sourceTree = "<group>"; };
+693A32A2DA4B140A0941B901 = {isa = PBXBuildFile; fileRef = 939ACC495B3CACB37576D9C3; };
+BA4B94735B15A6DC519B21AD = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Meye/Core/CardRepository.swift"; sourceTree = "<group>"; };
+0ECB9006E513FB4376F52A31 = {isa = PBXBuildFile; fileRef = BA4B94735B15A6DC519B21AD; };
+7E59A37455BFB0A8D6253ACB = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Meye/Core/Models.swift"; sourceTree = "<group>"; };
+45FADABDFC422FB655D6CDB6 = {isa = PBXBuildFile; fileRef = 7E59A37455BFB0A8D6253ACB; };
+2E0D04B22F77EE85655493DF = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Meye/MeyeApp.swift"; sourceTree = "<group>"; };
+8026BFC2C238400AE41E5A0E = {isa = PBXBuildFile; fileRef = 2E0D04B22F77EE85655493DF; };
+02860CA8BBCD5DC81B640A09 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Meye/ViewModels/MeyeViewModel.swift"; sourceTree = "<group>"; };
+1DACF4182AA4B2983E32B264 = {isa = PBXBuildFile; fileRef = 02860CA8BBCD5DC81B640A09; };
+6E224D38945DC1662C1E6395 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Meye/Views/ActivityView.swift"; sourceTree = "<group>"; };
+D086BC4DBE0EDC4BF9866311 = {isa = PBXBuildFile; fileRef = 6E224D38945DC1662C1E6395; };
+4F1B40A4542C5B55E01F4F2E = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Meye/Views/CaptureView.swift"; sourceTree = "<group>"; };
+821621A05320DCFFBC502B12 = {isa = PBXBuildFile; fileRef = 4F1B40A4542C5B55E01F4F2E; };
+136679B1F6B76F67E46A3F80 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Meye/Views/CardDetailView.swift"; sourceTree = "<group>"; };
+2727CB60EA652AB1CFB56D5D = {isa = PBXBuildFile; fileRef = 136679B1F6B76F67E46A3F80; };
+5368B11FCFBF806F93FC6108 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Meye/Views/CardEditorView.swift"; sourceTree = "<group>"; };
+21FDE371DD2D42DC6EF754A6 = {isa = PBXBuildFile; fileRef = 5368B11FCFBF806F93FC6108; };
+6F53245B5A336ED8609FA181 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Meye/Views/RootView.swift"; sourceTree = "<group>"; };
+AA5E944A60D876AEC631AF67 = {isa = PBXBuildFile; fileRef = 6F53245B5A336ED8609FA181; };
+5427477F4E934D60731C206D = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Meye/Views/SettingsView.swift"; sourceTree = "<group>"; };
+D9CF4B64015547A67F0597B7 = {isa = PBXBuildFile; fileRef = 5427477F4E934D60731C206D; };
+59290B13693C990131E750B9 = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Meye/Assets.xcassets"; sourceTree = "<group>"; };
+DF49A58F7C850F87BCF1EAA3 = {isa = PBXBuildFile; fileRef = 59290B13693C990131E750B9; };
+38A007151ABE87CC01A5B6E9 = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Meye.app; sourceTree = BUILT_PRODUCTS_DIR; };
+DC76E9F0C0006E8F919E0C51 = {isa = PBXGroup; children = (939ACC495B3CACB37576D9C3,BA4B94735B15A6DC519B21AD,7E59A37455BFB0A8D6253ACB,2E0D04B22F77EE85655493DF,02860CA8BBCD5DC81B640A09,6E224D38945DC1662C1E6395,4F1B40A4542C5B55E01F4F2E,136679B1F6B76F67E46A3F80,5368B11FCFBF806F93FC6108,6F53245B5A336ED8609FA181,5427477F4E934D60731C206D,59290B13693C990131E750B9, FBDC4F23F93125BBEEAE800C); sourceTree = "<group>"; };
+FBDC4F23F93125BBEEAE800C = {isa = PBXGroup; children = (38A007151ABE87CC01A5B6E9); name = Products; sourceTree = "<group>"; };
+BCE16DD0260827ECF338C787 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (693A32A2DA4B140A0941B901,0ECB9006E513FB4376F52A31,45FADABDFC422FB655D6CDB6,8026BFC2C238400AE41E5A0E,1DACF4182AA4B2983E32B264,D086BC4DBE0EDC4BF9866311,821621A05320DCFFBC502B12,2727CB60EA652AB1CFB56D5D,21FDE371DD2D42DC6EF754A6,AA5E944A60D876AEC631AF67,D9CF4B64015547A67F0597B7); runOnlyForDeploymentPostprocessing = 0; };
+0189424A5A60FED329FA868E = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (DF49A58F7C850F87BCF1EAA3); runOnlyForDeploymentPostprocessing = 0; };
+7561BFB015D8F536760CB671 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+0E8A3AD980EC179856012B7E = {isa = PBXNativeTarget; buildConfigurationList = C57128001CE614BF8549D6BB; buildPhases = (93F6EE61EA3366B0462A2750, BCE16DD0260827ECF338C787, 7561BFB015D8F536760CB671, 0189424A5A60FED329FA868E); buildRules = (); dependencies = (); name = Meye; productName = Meye; productReference = 38A007151ABE87CC01A5B6E9; productType = "com.apple.product-type.application"; };
+98F54143AB4E86B28C3AFEE0 = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = YES; LastUpgradeCheck = 1500; TargetAttributes = {0E8A3AD980EC179856012B7E = {CreatedOnToolsVersion = 15.0; }; }; }; buildConfigurationList = 862894B703A6DEDF96A9DD6C; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base); mainGroup = DC76E9F0C0006E8F919E0C51; productRefGroup = FBDC4F23F93125BBEEAE800C; projectDirPath = ""; projectRoot = ""; targets = (0E8A3AD980EC179856012B7E); };
+89E1FD6268CC0F221A2BE178 = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;}; name = Debug; };
+E6DE6C99132752C914FEF632 = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SWIFT_OPTIMIZATION_LEVEL = "-O";}; name = Release; };
+862894B703A6DEDF96A9DD6C = {isa = XCConfigurationList; buildConfigurations = (89E1FD6268CC0F221A2BE178, E6DE6C99132752C914FEF632); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+7082CC0B6FC1282FCEABD07A = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SWIFT_VERSION = 5.0; SWIFT_STRICT_CONCURRENCY = complete; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = Meye; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity"; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"; INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"; PRODUCT_BUNDLE_IDENTIFIER = com.r69shabh.meye.ios; PRODUCT_NAME = "$(TARGET_NAME)"; TARGETED_DEVICE_FAMILY = "1,2"; CODE_SIGN_STYLE = Automatic; ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor; ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;}; name = Debug; };
+639A7CA24D39909E713B47F7 = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SWIFT_VERSION = 5.0; SWIFT_STRICT_CONCURRENCY = complete; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = Meye; INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity"; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"; INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"; PRODUCT_BUNDLE_IDENTIFIER = com.r69shabh.meye.ios; PRODUCT_NAME = "$(TARGET_NAME)"; TARGETED_DEVICE_FAMILY = "1,2"; CODE_SIGN_STYLE = Automatic; ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor; ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_OPTIMIZATION_LEVEL = "-O";}; name = Release; };
+C57128001CE614BF8549D6BB = {isa = XCConfigurationList; buildConfigurations = (7082CC0B6FC1282FCEABD07A, 639A7CA24D39909E713B47F7); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+};
+rootObject = 98F54143AB4E86B28C3AFEE0;
+}
