@@ -1,0 +1,41 @@
+Building for debugging...
+[Using on-disk description]
+[2 / 9] MeyeCore
+[5 / 11] MeyeCore
+[9 / 12] MeyeCoreTests-product
+[13 / 15] MeyeCoreTests-test-runner
+[16 / 16] MeyeCoreTests-test-runner
+Build complete! (1.31 secs)
+Test Suite 'All tests' started at 2026-10-01 21:36:02.332
+Test Suite 'Debug-linux-x86_64.xctest' started at 2026-10-01 21:36:02.333
+Test Suite 'MeyeCoreTests' started at 2026-10-01 21:36:02.333
+Test Case 'MeyeCoreTests.testArchiveRoundTrip' started at 2026-10-01 21:36:02.333
+Test Case 'MeyeCoreTests.testArchiveRoundTrip' passed (0.005 seconds)
+Test Case 'MeyeCoreTests.testCompletionIsDayScoped' started at 2026-10-01 21:36:02.338
+Test Case 'MeyeCoreTests.testCompletionIsDayScoped' passed (0.001 seconds)
+Test Case 'MeyeCoreTests.testExplicitKindWins' started at 2026-10-01 21:36:02.339
+Test Case 'MeyeCoreTests.testExplicitKindWins' passed (0.001 seconds)
+Test Case 'MeyeCoreTests.testInvalidTimeStaysVisible' started at 2026-10-01 21:36:02.340
+Test Case 'MeyeCoreTests.testInvalidTimeStaysVisible' passed (0.001 seconds)
+Test Case 'MeyeCoreTests.testMorningCue' started at 2026-10-01 21:36:02.341
+Test Case 'MeyeCoreTests.testMorningCue' passed (0.101 seconds)
+Test Case 'MeyeCoreTests.testNotePreservesMidSentenceWords' started at 2026-10-01 21:36:02.442
+Test Case 'MeyeCoreTests.testNotePreservesMidSentenceWords' passed (0.001 seconds)
+Test Case 'MeyeCoreTests.testRejectsDuplicateIDs' started at 2026-10-01 21:36:02.443
+Test Case 'MeyeCoreTests.testRejectsDuplicateIDs' passed (0.001 seconds)
+Test Case 'MeyeCoreTests.testRepositoryPersistsAndDoesNotResetCorruptData' started at 2026-10-01 21:36:02.444
+Test Case 'MeyeCoreTests.testRepositoryPersistsAndDoesNotResetCorruptData' passed (0.004 seconds)
+Test Case 'MeyeCoreTests.testRoutineItemsAndTags' started at 2026-10-01 21:36:02.448
+Test Case 'MeyeCoreTests.testRoutineItemsAndTags' passed (0.001 seconds)
+Test Case 'MeyeCoreTests.testTodoTomorrowPM' started at 2026-10-01 21:36:02.450
+Test Case 'MeyeCoreTests.testTodoTomorrowPM' passed (0.001 seconds)
+Test Suite 'MeyeCoreTests' passed at 2026-10-01 21:36:02.450
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.117 (0.117) seconds
+Test Suite 'Debug-linux-x86_64.xctest' passed at 2026-10-01 21:36:02.450
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.117 (0.117) seconds
+Test Suite 'All tests' passed at 2026-10-01 21:36:02.450
+	 Executed 10 tests, with 0 failures (0 unexpected) in 0.117 (0.117) seconds
+◇ Test run started.
+↳ Testing Library Version: 6.4 (efd8d65801f569d)
+↳ Target Platform: x86_64-unknown-linux-gnu
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.
